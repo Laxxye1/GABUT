@@ -1,0 +1,181 @@
+/* Scrollcraft for MusifyRik: small, functional motion inside the real app.
+   Only project-scoped rules live here; the upstream engine is unmodified. */
+
+/* Reveal only after the runtime is ready. If JS or Scrollcraft is unavailable,
+   the existing Home UI remains fully visible. */
+html.sc-ready #view-home [data-sc-in],
+html.sc-ready #view-home [data-sc-stagger] > * {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 480ms cubic-bezier(.22, 1, .36, 1),
+    transform 560ms cubic-bezier(.22, 1, .36, 1);
+}
+html.sc-ready #view-home [data-sc-in].sc-in,
+html.sc-ready #view-home [data-sc-stagger] > .sc-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Pointer response belongs to cards, never to the whole application shell. */
+#view-home [data-sc-spotlight] {
+  --sc-mx: .5;
+  --sc-my: .5;
+}
+.sc-light-layer {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(260px circle at calc(var(--sc-mx) * 100%) calc(var(--sc-my) * 100%),
+    rgba(255, 255, 255, .24), transparent 68%);
+  transition: opacity 220ms ease;
+}
+[data-sc-spotlight]:hover > .sc-light-layer,
+[data-sc-spotlight]:focus-within > .sc-light-layer {
+  opacity: 1;
+}
+.home-featured-content,
+.home-featured .featured-edition {
+  z-index: 1;
+}
+.home-news-link {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.home-news-link > :not(.sc-light-layer) {
+  position: relative;
+  z-index: 1;
+}
+#home-featured-play[data-sc-magnet] {
+  will-change: transform;
+  transition: transform 180ms cubic-bezier(.22, 1, .36, 1),
+    box-shadow 180ms ease;
+}
+
+/* A record turns and artwork breathes from #main-area scroll progress. */
+.home-featured-image {
+  transform: translate3d(0, calc(var(--mr-hero-p, 0) * 24px), 0)
+    scale(calc(1.025 + var(--mr-hero-p, 0) * .035));
+  transform-origin: 70% center;
+  will-change: transform;
+}
+.bento-record {
+  transform: rotate(calc(-25deg + var(--mr-hero-p, 0) * 42deg));
+}
+.bento-orbit {
+  transform: rotate(calc(-26deg + var(--mr-hero-p, 0) * 30deg));
+}
+
+/* Low-frequency accent light moves in the existing fixed background. */
+.app-bg {
+  overflow: hidden;
+}
+.app-bg::after {
+  content: '';
+  position: absolute;
+  inset: -14%;
+  pointer-events: none;
+  opacity: calc(.13 + var(--mr-energy, 0) * .07);
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(var(--accent-rgb), .22), transparent 35%),
+    radial-gradient(ellipse at 88% 62%, rgba(167, 139, 250, .12), transparent 42%);
+  transform: translate3d(0, calc(var(--mr-scroll, 0) * -36px), 0);
+  will-change: transform, opacity;
+}
+
+/* The sound field is driven by scroll velocity, not a permanent decoration.
+   During playback the bars take a quiet, independent rhythm from audio events. */
+.scroll-sound-field {
+  --mr-energy: 0;
+  position: fixed;
+  z-index: 40;
+  top: 50%;
+  right: max(9px, env(safe-area-inset-right, 0px));
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 25px;
+  height: 48px;
+  pointer-events: none;
+  opacity: calc(.2 + var(--mr-energy) * .48);
+  transform: translateY(-50%) scaleY(calc(.52 + var(--mr-energy) * .72));
+  transform-origin: center;
+  transition: opacity 160ms ease;
+}
+body[data-screen='home'] .scroll-sound-field {
+  display: flex;
+}
+.scroll-sound-field i {
+  display: block;
+  width: 2px;
+  height: 25px;
+  border-radius: 99px;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), .2);
+  transform: scaleY(.24);
+  transform-origin: center;
+}
+.scroll-sound-field i:nth-child(2),
+.scroll-sound-field i:nth-child(4) {
+  height: 35px;
+}
+.scroll-sound-field i:nth-child(3) {
+  height: 44px;
+}
+body.mr-is-playing .scroll-sound-field {
+  opacity: calc(.32 + var(--mr-energy) * .42);
+}
+body.mr-is-playing .scroll-sound-field i {
+  animation: mr-sound-bar 1.15s ease-in-out infinite alternate;
+}
+body.mr-is-playing .scroll-sound-field i:nth-child(2) { animation-delay: -780ms; }
+body.mr-is-playing .scroll-sound-field i:nth-child(3) { animation-delay: -420ms; }
+body.mr-is-playing .scroll-sound-field i:nth-child(4) { animation-delay: -920ms; }
+body.mr-is-playing .scroll-sound-field i:nth-child(5) { animation-delay: -260ms; }
+@keyframes mr-sound-bar {
+  0% { transform: scaleY(.2); }
+  45% { transform: scaleY(.72); }
+  100% { transform: scaleY(.38); }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .sc-light-layer { display: none; }
+  .home-featured-image { will-change: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.sc-ready #view-home [data-sc-in],
+  html.sc-ready #view-home [data-sc-stagger] > *,
+  html.sc-ready #view-home [data-sc-in].sc-in,
+  html.sc-ready #view-home [data-sc-stagger] > .sc-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .home-featured-image { transform: none; will-change: auto; }
+  .bento-record { transform: rotate(-25deg); }
+  .bento-orbit { transform: rotate(-26deg); }
+  .app-bg::after { transform: none; opacity: .11; will-change: auto; }
+  .scroll-sound-field,
+  body.mr-is-playing .scroll-sound-field {
+    opacity: .24;
+    transform: translateY(-50%);
+    transition: none;
+  }
+  body.mr-is-playing .scroll-sound-field i { animation: none; }
+  .sc-light-layer { display: none; }
+}
+
+@media print {
+  #view-home [data-sc-in],
+  #view-home [data-sc-stagger] > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .scroll-sound-field,
+  .sc-light-layer { display: none !important; }
+}

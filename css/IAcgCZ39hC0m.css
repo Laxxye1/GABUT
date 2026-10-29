@@ -1,0 +1,68 @@
+/* 3.4 · Player lifecycle polish. Existing Liquid Midnight layout remains intact. */
+#mini-player-inner #mini-close-btn { display: inline-flex !important; align-items:center; justify-content:center; min-width:32px; min-height:40px; color:#cbc4d4 !important; }
+#mini-close-btn:hover, #full-dismiss-btn:hover { color:#edb3bd !important; }
+#mini-close-btn > div { margin:0; }
+.fp-header #full-dismiss-btn { width:38px; height:38px; flex-basis:38px; }
+.fp-header #full-dismiss-btn svg { width:18px; height:18px; }
+.fp-art-stage { grid-template-rows:minmax(0,1fr) auto; gap:10px; }
+.fp-art-frame { height:min(32dvh,290px); }
+#full-artwork-spin { width:100%; height:100%; border-radius:50%; animation:artwork-turn 24s linear infinite; animation-play-state:paused; will-change:transform; }
+#full-player-card[data-artwork="square"] #full-artwork-spin { animation:none; transform:none; border-radius:22px; }
+#full-player-card[data-artwork="square"] #full-cover,
+#full-player-card[data-artwork="square"] #full-cover-next-img,
+#full-player-card[data-artwork="square"] #full-cover-overlay,
+#full-player-card[data-artwork="square"] #full-cover-next-overlay { border-radius:22px !important; }
+.fp-artwork-options { display:flex; align-items:center; gap:4px; max-width:100%; padding:4px; border:1px solid #ffffff0b; border-radius:13px; background:#0c0a11a8; box-shadow:inset 2px 2px 6px #0003; }
+.fp-artwork-options button { display:inline-flex; align-items:center; justify-content:center; width:36px; min-width:36px; min-height:36px; padding:8px; border:0; border-radius:9px; color:#ada0ba; background:transparent; cursor:pointer; }
+.fp-artwork-options button[aria-pressed="true"] { color:var(--accent); background:#332b3e; box-shadow:inset 0 1px 1px #ffffff15,2px 3px 6px #0003; }
+.fp-artwork-options svg { width:13px; height:13px; }
+.fp-card[data-view="lyrics"] .fp-artwork-options { visibility:hidden; }
+.fp-lyric-preview { position:relative; contain:paint; }
+.fp-preview-outgoing { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; position:absolute; inset:0; pointer-events:none; padding:2px 0; }
+.fp-preview-outgoing > span { display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; line-height:1.45; color:#777180; }
+.fp-preview-outgoing > span:nth-child(2) { color:#f8f6fb; font-size:15px; }
+.fp-preview-outgoing > span:first-child,.fp-preview-outgoing > span:last-child { opacity:.45; }
+.fp-seek-track:has(input:disabled) { opacity:.45; }
+@keyframes artwork-turn { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@media (max-height:650px) and (orientation:portrait) {
+  .fp-art-stage { gap:5px; padding-block:0; }
+  .fp-artwork-options { padding:3px; }
+  .fp-artwork-options button { min-height:26px; font-size:8px; padding:5px 8px; }
+  .fp-artwork-options svg { width:11px; height:11px; }
+  .fp-card { gap:8px; }
+}
+@media (max-height:500px) and (orientation:landscape) {
+  .fp-art-stage { gap:5px; }
+  .fp-art-frame { height:min(44dvh,180px); }
+  .fp-artwork-options button { min-height:25px; padding:4px 8px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #full-artwork-spin { animation:none !important; }
+  .fp-preview-outgoing { display:none; }
+}
+.desktop-sidebar { overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+#pwa-offline-banner[hidden] { display:none !important; }
+#pwa-update-ready { position:fixed; z-index:150; left:max(18px,calc(var(--sidebar-width) + 18px)); right:18px; bottom:calc(180px + env(safe-area-inset-bottom,0px)); display:flex; align-items:center; gap:11px; max-width:620px; margin:0 auto; padding:15px; border:1px solid #d2e69935; border-radius:19px; background:#23291bea; color:#e4edce; box-shadow:0 10px 40px #0006,inset 0 1px 1px #fff2; backdrop-filter:blur(20px); }
+#pwa-update-ready > div { min-width:0; flex:1; }
+#pwa-update-ready strong { display:block; font-size:12px; font-weight:650; }
+#pwa-update-ready span { display:block; margin-top:5px; font-size:10px; color:#b5c49f; line-height:1.6; }
+#pwa-update-ready button { min-height:35px; padding:8px 11px; border:1px solid #e5ffc31d; border-radius:11px; color:#172109; background:var(--accent); font-size:10px; font-weight:600; }
+#pwa-update-ready #pwa-update-dismiss { padding:7px; background:transparent; color:#c2d3ad; font-size:20px; }
+#boot-recovery { position:fixed; inset:0; z-index:10001; display:grid; place-items:center; padding:25px; background:#09090e; color:#eee7f5; font:14px/1.8 Manrope,system-ui,sans-serif; text-align:center; }
+#boot-recovery > div { max-width:370px; }
+#boot-recovery img { display:block; margin:0 auto 22px; border-radius:20px; }
+#boot-recovery h1 { margin:0 0 14px; font-size:25px; letter-spacing:-.7px; }
+#boot-recovery p { color:#b8aabe; }
+#boot-recovery button { margin-top:23px; padding:12px 22px; color:#1b230c; background:#cce765; border:0; border-radius:14px; font:600 13px Manrope,system-ui,sans-serif; cursor:pointer; }
+.no-script { position:relative; z-index:100; max-width:520px; margin:15vh auto; padding:25px; color:#eee9f4; font:15px/1.9 system-ui,sans-serif; }
+.no-script h1 { font-size:30px; color:#cce765; }
+.no-script a { color:#cce765; text-decoration:underline; }
+.fp-card[data-view="lyrics"] .fp-artwork-options { display:none; }
+.fp-card[data-view="lyrics"] .fp-art-stage { grid-template-rows:minmax(0,1fr); }
+.backup-panel { width:100%; max-width:384px; padding:20px; margin:22px auto; border:1px solid #ffffff10; border-radius:21px; background:linear-gradient(140deg,#33253d,#1a151f); }
+.backup-panel h2 { font-size:17px; font-weight:550; letter-spacing:-.4px; color:#e8d9f2; }
+.backup-panel p { margin:12px 0 17px; font-size:10px; line-height:1.9; color:#b09bbd; }
+.backup-panel > div { display:flex; gap:8px; }
+.backup-panel > div button { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:38px; border:1px solid #cda2ef25; border-radius:11px; background:#3a2946; color:#e4ceef; font-size:10px; }
+.backup-panel svg { width:14px; height:14px; }
+.backup-update-check { display:block; margin:16px auto 0; min-height:30px; font-size:10px; color:var(--accent); }

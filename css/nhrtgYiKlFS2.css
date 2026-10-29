@@ -1,0 +1,179 @@
+/* ==========================================================================
+   MusifyRik — Lyrics FX (animasi lirik)
+   Semua visual & gerak animasi lirik baru. Terkunci di .fx-stage / .fx-host
+   sehingga tidak menyentuh gaya UI lain di aplikasi.
+   ========================================================================== */
+
+/* container pemilik panggung */
+.fx-host { height: 100%; }
+/* wrapper di dalam lyrics-scroll-container harus height penuh supaya
+   .fx-stage menjadi viewport sejati (bukan setinggi konten) */
+.fx-host-wrap { height: 100%; }
+.fx-locked { overflow: hidden !important; -webkit-overflow-scrolling: auto; }
+.fx-zero { padding-top: 0 !important; padding-bottom: 0 !important; }
+
+.fx-stage {
+  /* ukuran & gerak */
+  --fx-fs: clamp(32px, 8.2vw, 64px);     /* ukuran baris aktif (diperkecil sedikit) */
+  --fx-gap: .62em;
+  --fx-blur-unit: 2.2px;                 /* dikalikan jarak dari baris aktif */
+  --fx-wave-lift: .16em;                 /* tinggi angkat kata aktif */
+  --fx-pop-dur: 280ms;                   /* kecepatan naik/turun angkat kata */
+  --fx-ease-out: cubic-bezier(.16, 1, .3, 1);
+  --fx-ease-soft: cubic-bezier(.4, 0, .2, 1);
+
+  /* warna teks lirik: "off" = belum dinyanyikan, "on" = sudah */
+  --fx-w-off-idle: rgba(255, 255, 255, .30);
+  --fx-w-on-idle: rgba(255, 255, 255, .42);
+  --fx-w-off-active: rgba(255, 255, 255, .30);
+  --fx-w-on-active: #ffffff;
+
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  cursor: default;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 13%, #000 87%, transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0, #000 13%, #000 87%, transparent 100%);
+}
+
+/* panggung kecil (kotak lirik compact di Full Player) */
+.fx-stage.fx-small {
+  --fx-fs: clamp(17px, 5.2vw, 27px);     /* kotak compact — ikut diperbesar */
+  --fx-gap: .5em;
+  --fx-blur-unit: 1.6px;
+  --fx-wave-lift: .13em;
+}
+
+/* track = kolom semua baris, digeser dengan translate3d */
+.fx-track {
+  position: relative;
+  padding: 45vh 0;               /* supaya baris pertama & terakhir bisa ke tengah */
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--fx-gap);
+}
+
+/* Setiap baris. --ad = jarak absolut dari baris aktif (di-set dari JS). */
+.fx-line {
+  --ad: 5;
+  --w-off: var(--fx-w-off-idle);
+  --w-on: var(--fx-w-on-idle);
+  font-size: var(--fx-fs);
+  line-height: 1.28;
+  font-weight: 800;
+  letter-spacing: -.015em;
+  text-align: center;
+  padding: 0 4px;
+  cursor: pointer;
+  opacity: clamp(0, calc(1 - var(--ad) * .26), 1);
+  transform: scale(calc(1 - min(var(--ad), 5) * .05));
+  transform-origin: 50% 50%;
+  transition:
+    opacity .34s var(--fx-ease-soft),
+    transform .42s var(--fx-ease-out),
+    filter .34s var(--fx-ease-soft);
+}
+.fx-stage.fx-blur .fx-line {
+  filter: blur(calc(min(var(--ad), 4) * var(--fx-blur-unit)));
+}
+.fx-line.near { will-change: transform, opacity, filter; }
+/* tanpa class fx-blur, baris sekitar hanya meredup & mengecil halus
+   (seperti perilaku lama), tidak ada efek blur */
+.fx-line:hover { opacity: 1 !important; }
+
+.fx-line.is-active {
+  --w-off: var(--fx-w-off-active);
+  --w-on: var(--fx-w-on-active);
+  transform: scale(1);
+  opacity: 1;
+  filter: none !important;
+}
+
+.fx-inner { display: inline; }
+
+/* kemunculan baris (stagger saat lirik dimuat) */
+.fx-track.entering .fx-inner {
+  animation: fx-line-in .55s var(--fx-ease-out) backwards;
+  animation-delay: calc(min(var(--i), 16) * 26ms);
+}
+@keyframes fx-line-in {
+  from { opacity: 0; transform: translateY(20px) scale(.955); filter: blur(6px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* pop saat sebuah baris jadi aktif (aktifkan class .fx-pop di .fx-stage) */
+.fx-stage.fx-pop .fx-line.is-active .fx-inner {
+  animation: fx-line-pop .5s var(--fx-ease-out);
+}
+@keyframes fx-line-pop {
+  0%   { transform: translateY(10px) scale(.975); }
+  60%  { transform: translateY(-1px) scale(1.008); }
+  100% { transform: none; }
+}
+
+/* --- kata: fill karaoke via gradient yang di-clip ke teks ---
+   --p = 0..1 progres kata (di-set JS tiap frame) */
+.fx-word {
+  --p: 0;
+  --edge: 12%;
+  display: inline-block;              /* wajib supaya bisa di-transform */
+  background-image: linear-gradient(90deg,
+    var(--w-on)  calc(var(--p) * 100% - var(--edge)),
+    var(--w-off) calc(var(--p) * 100%));
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  transform-origin: 50% 100%;
+  transition:
+    transform var(--fx-pop-dur) cubic-bezier(.25, .1, .25, 1),
+    filter    var(--fx-pop-dur) cubic-bezier(.25, .1, .25, 1);
+}
+/* --- tanpa tepi/outline/halo di pinggir teks (permintaan user) --- */
+
+/* --- angkat kata aktif: NAIK cepat, TERTAHAN naik selama gilirannya,
+   TURUN halus begitu giliran kata itu berakhir (class .is-current) --- */
+.fx-word.is-current {
+  transform: translate3d(0, calc(var(--fx-wave-lift) * -1), 0) scale(1.055);
+  filter: brightness(1.35);
+}
+
+/* terjemahan di bawah baris (tidak ikut karaoke) */
+.fx-trans {
+  display: block;
+  font-size: .55em;
+  font-weight: 500;
+  opacity: .62;
+  margin-top: 3px;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, .55);
+}
+.fx-small .fx-trans { font-size: .72em; margin-top: 2px; }
+
+/* penutup lirik */
+.fx-end {
+  font-size: 11px;
+  letter-spacing: .25em;
+  color: rgba(255, 255, 255, .35);
+  opacity: .5;
+  margin-top: 26px;
+}
+
+/* fallback kalau background-clip:text tidak didukung */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .fx-word { color: var(--w-off); background: none; -webkit-text-fill-color: currentColor; }
+  .fx-line.is-active .fx-word { color: var(--w-on); }
+}
+
+/* hormati preferensi pengguna */
+@media (prefers-reduced-motion: reduce) {
+  .fx-line, .fx-inner, .fx-word {
+    transition-duration: .01ms !important;
+    animation: none !important;
+  }
+  .fx-stage.fx-blur .fx-line { filter: none; }
+}
